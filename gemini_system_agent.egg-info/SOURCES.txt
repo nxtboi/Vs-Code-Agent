@@ -1,0 +1,10 @@
+README.md
+agent.py
+pyproject.toml
+ui.py
+gemini_system_agent.egg-info/PKG-INFO
+gemini_system_agent.egg-info/SOURCES.txt
+gemini_system_agent.egg-info/dependency_links.txt
+gemini_system_agent.egg-info/entry_points.txt
+gemini_system_agent.egg-info/requires.txt
+gemini_system_agent.egg-info/top_level.txt

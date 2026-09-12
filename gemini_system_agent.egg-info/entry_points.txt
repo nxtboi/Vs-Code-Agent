@@ -1,0 +1,3 @@
+[console_scripts]
+gemini-agent = agent:main
+gemini-agent-ui = ui:main

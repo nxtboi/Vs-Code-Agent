@@ -1,0 +1,21 @@
+[project]
+name = "gemini-system-agent"
+version = "0.1.0"
+description = "A confirmation-first Gemini agent for safe local PowerShell tasks"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+  "google-genai>=1.0.0",
+  "python-dotenv>=1.0.0",
+  "SpeechRecognition>=3.10.0",
+  "sounddevice>=0.5.0",
+  "numpy>=2.0.0",
+  "playwright>=1.50.0",
+]
+
+[project.scripts]
+gemini-agent = "agent:main"
+gemini-agent-ui = "ui:main"
+
+[tool.setuptools]
+py-modules = ["agent", "ui"]

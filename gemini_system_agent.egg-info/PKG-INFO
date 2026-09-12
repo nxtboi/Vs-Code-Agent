@@ -1,0 +1,130 @@
+Metadata-Version: 2.4
+Name: gemini-system-agent
+Version: 0.1.0
+Summary: A confirmation-first Gemini agent for safe local PowerShell tasks
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: google-genai>=1.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: SpeechRecognition>=3.10.0
+Requires-Dist: sounddevice>=0.5.0
+Requires-Dist: numpy>=2.0.0
+Requires-Dist: playwright>=1.50.0
+
+# Gemini System Agent
+
+[![Python CI](https://github.com/YOUR-OWNER/YOUR-REPOSITORY/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-OWNER/YOUR-REPOSITORY/actions/workflows/ci.yml)
+
+A small, confirmation-first local agent that uses Gemini's Interactions API and function calling to propose PowerShell tasks. Every command is shown before execution, and declined commands are reported back to Gemini so it can adjust.
+
+This is a local Windows application, not a hosted web service. GitHub can host the source, run the automated checks in `.github/workflows/ci.yml`, and distribute tagged source releases; the desktop UI and PowerShell tools run on the user's own Windows machine.
+
+## Setup
+
+1. Create the project environment and install dependencies from `cmd.exe` or PowerShell:
+
+   ```cmd
+   py -m venv .venv
+   .venv\Scripts\python.exe -m pip install -e .
+   ```
+
+2. Copy `.env.example` to `.env` and set `GEMINI_API_KEY`. The default model is `gemini-3.6-flash`, which uses Gemini's Interactions API.
+   The key must be a valid Gemini API key created in Google AI Studio. If the agent reports `API_KEY_INVALID`, replace the value in `.env` with a newly created key.
+
+Never commit `.env` or a real API key. For a GitHub repository, keep only the placeholder in `.env.example` and add deployment secrets through GitHub Actions or the host's secret manager.
+
+## GitHub
+
+1. Create an empty GitHub repository.
+2. Add this project, commit the files, and push the `main` branch.
+3. Confirm the **Python CI** workflow passes under the repository's **Actions** tab.
+
+The workflow validates Python 3.11 through 3.13 and checks both console entry points. GitHub-hosted runners do not provide the local Tkinter desktop experience, PowerShell confirmation flow, microphone, or persistent browser profile; those remain local-machine features.
+
+## Desktop UI
+
+Start the graphical interface:
+
+```cmd
+run-agent-ui.cmd
+```
+
+The UI includes a task box, a dry-run toggle, and a live output panel. It uses the same agent logic as the terminal version, including confirmation dialogs before PowerShell or browser actions are executed.
+
+## Terminal usage
+
+Run a task from Command Prompt:
+
+```cmd
+run-agent.cmd "Show the top 10 processes by CPU usage"
+```
+
+Use `--dry-run` to let Gemini propose commands without executing them:
+
+```cmd
+run-agent.cmd --dry-run "Inspect available drives"
+```
+
+The wrapper uses the project's `.venv` automatically. You can also invoke the Python file directly with `py agent.py ...`.
+
+## Commit changes to GitHub
+
+Ask the agent explicitly to commit selected files, for example:
+
+```cmd
+run-agent.cmd "Commit agent.py and README.md to GitHub with message Add GitHub commit support and push the current branch"
+```
+
+The agent requires a repository-relative file list and a commit message. It shows the exact `git add`, `git commit`, and optional `git push` operation before asking for confirmation. Git uses the credentials and remote configuration already set up on the machine; do not enter credentials into the agent.
+
+To keep the agent running and enter several tasks in one session, run it without a task:
+
+```cmd
+run-agent.cmd
+```
+
+Enter each task at the `Task>` prompt. Type `exit` or `quit` to stop, or press Ctrl+C.
+
+To accept spoken tasks from the default microphone, run the interactive agent with voice input:
+
+```cmd
+run-agent.cmd --voice
+```
+
+Speak one task after each `Listening...` prompt. Say `exit` or `quit` to stop. Voice input uses SpeechRecognition and its Google speech-to-text service, so it requires a working microphone and an internet connection.
+
+To close VS Code, ask explicitly, for example: `Close VS Code gracefully`. The agent will propose a non-forced close and wait for confirmation. Save any work first because VS Code may show an unsaved-changes prompt.
+
+## Browser access
+
+Ask the agent to open a public page in your Windows default browser:
+
+```cmd
+run-agent.cmd "Open https://github.com in my default browser"
+```
+
+This action launches the URL only. It does not read pages, enter credentials, or control the default browser. The existing browser actions use a separate visible Chromium profile when the agent needs page inspection or interaction.
+
+Install the Chromium runtime once after installing the project:
+
+```cmd
+py -m playwright install chromium
+```
+
+Then ask the agent to browse normally, for example:
+
+```cmd
+run-agent.cmd "Open https://example.com and tell me the page title"
+```
+
+The agent opens a visible Chromium window and can navigate, read page text, click elements, fill non-sensitive fields, and press keys. Each browser action requires confirmation. Login state is stored locally in `.browser-profile` so sites can remain signed in between runs. Never enter passwords, API keys, or other secrets through the agent.
+
+To upload repository files to GitHub, ask the agent to commit and push the selected files as described above. This uses Git's existing remote and credential configuration and does not require entering credentials in a browser.
+
+## Safety boundary
+
+The initial tool is intentionally limited to one local, non-interactive PowerShell command at a time. It has a 5-second timeout and truncates large output. Transient Gemini 503 responses are retried up to three times with a short backoff. The model is instructed to avoid destructive, credential-related, security-sensitive, and network-changing actions, but the confirmation prompt is the final authorization boundary. Review every proposed command before accepting it.
+
+Browser access is deliberately limited to separate, confirmation-first actions rather than unrestricted JavaScript or shell access. Review every proposed browser action before accepting it.
+
+Do not put a real API key in `.env.example`. Store it only in `.env`, which is excluded from source control. If a real key has been shared or committed, revoke it in Google AI Studio and create a replacement.
