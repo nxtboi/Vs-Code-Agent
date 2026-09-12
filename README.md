@@ -20,11 +20,43 @@ Never commit `.env` or a real API key. For a GitHub repository, keep only the pl
 
 ## GitHub
 
-1. Create an empty GitHub repository.
-2. Add this project, commit the files, and push the `main` branch.
-3. Confirm the **Python CI** workflow passes under the repository's **Actions** tab.
+### Publish the repository
 
-The workflow validates Python 3.11 through 3.13 and checks both console entry points. GitHub-hosted runners do not provide the local Tkinter desktop experience, PowerShell confirmation flow, microphone, or persistent browser profile; those remain local-machine features.
+Create an empty repository on GitHub, then run these commands from the project directory. Replace the URL with your repository's HTTPS or SSH URL:
+
+```cmd
+git init
+git branch -M main
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/YOUR-OWNER/YOUR-REPOSITORY.git
+git push -u origin main
+```
+
+Before pushing, verify that `.env` is ignored and that `.env.example` contains only a placeholder API key:
+
+```cmd
+git status --short --ignored
+```
+
+### Continuous integration
+
+The [Python CI workflow](.github/workflows/ci.yml) runs automatically for pushes to `main` and for pull requests. It tests Python 3.11, 3.12, and 3.13 by installing the package, compiling the Python sources, importing both modules, and checking the `gemini-agent` console command.
+
+The CI workflow does not need `GEMINI_API_KEY` because it does not call the Gemini API. Do not add the API key to repository files. If a future workflow needs it, add `GEMINI_API_KEY` under **Repository Settings > Secrets and variables > Actions** and reference it as `${{ secrets.GEMINI_API_KEY }}`.
+
+### Run after cloning
+
+This project runs locally on Windows; GitHub does not host the Tkinter desktop UI or the PowerShell, microphone, and browser features. After cloning, use:
+
+```cmd
+py -m venv .venv
+.venv\Scripts\python.exe -m pip install -e .
+copy .env.example .env
+```
+
+Set `GEMINI_API_KEY` in `.env`, then start the application with `run-agent.cmd` or `run-agent-ui.cmd`. GitHub-hosted runners are intended for validation, not for running the interactive desktop agent.
+
 
 ## Desktop UI
 
